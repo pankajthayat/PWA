@@ -48,6 +48,7 @@
      "lang": "en-US"
 }
 
+// add manifest.json in any page we have in our app.... in SPA only one place is required...here its not SPA.... in multi page app...we add in multiple page bcoz we want to insure our config should be present every url we visit
 
 
 //short_name : ex . its is short name of our app. will be dispaled below app icon
