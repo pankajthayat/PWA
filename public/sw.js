@@ -22,7 +22,7 @@ self.addEventListener("fetch", function(event) {
    // event.respondWith(null); // can override what we want to respond...if we dont use it...simple response the default
     // with null...check the o/p...it will show site cannot reach
 
-    event.respondWith(fetch(event.request)); // 
+    event.respondWith(fetch(event.request)); //This line does simply return the response of the request. This will become more useful once we start caching the response as well 
 });
 
 /// we cam think sw as netwrok proxy....every ougoing fetch req goes through the sw
