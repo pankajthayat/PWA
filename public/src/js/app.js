@@ -3,6 +3,10 @@
 //after adding ...import them, before we execute oute our code i.e: before app.js...check in index.html....1st will be promise.js...bcoz..fetch uses them..then fetch...then app.js
 
 
+if(!window.Promise){// to check if our browser have promise supprot.....if not we will add pollyfills
+window.Promise = Promise;
+}
+
 if ("serviceWorker" in navigator) {
   // check is browser has sw
   navigator.serviceWorker
@@ -30,14 +34,4 @@ localhost is an exception...to make devlopment easier...
 
 window.addEventListener("beforeinstallpromt", function() {
 
-})
-
-
-fetch("https://httasdsadaspbin.org/ips").then(function(res){
-console.log("data : ", res);
-return res.json();
-}).then((res)=>{
-  console.log("res : ", res);
-}).catch((error)=>{
-  console.log("error : ", error);
 })
