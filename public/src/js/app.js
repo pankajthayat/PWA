@@ -1,9 +1,14 @@
+// sw works on mordern browsers only...fetch too...this is our main functions so we use polyyfills forso that fetcgghw ill be supported in older browser...ajex is supported in oldeer
+// polyyfills can be found in github..internet just add them in our app
+//after adding ...import them, before we execute oute our code i.e: before app.js...check in index.html....1st will be promise.js...bcoz..fetch uses them..then fetch...then app.js
+
+
 if ("serviceWorker" in navigator) {
   // check is browser has sw
   navigator.serviceWorker
     .register("/sw.js") ////registration process takes some time.....register return a promise
     .then(function() {
-      console.log("Service worker registered !");
+     //console.log("Service worker registered !");
     });
 }
 
@@ -19,3 +24,20 @@ imp : => sw will only work on pages served by https....manifest and sw are indep
 localhost is an exception...to make devlopment easier...
 
  */
+
+
+ // to show the add to home screen later point in time..
+
+window.addEventListener("beforeinstallpromt", function() {
+
+})
+
+
+fetch("https://httasdsadaspbin.org/ips").then(function(res){
+console.log("data : ", res);
+return res.json();
+}).then((res)=>{
+  console.log("res : ", res);
+}).catch((error)=>{
+  console.log("error : ", error);
+})
