@@ -1,12 +1,42 @@
-//sw runs in backgroud...its all about handling events....
-//thats why we always attach event listener to sw...always react to events
 
-// self is for..
-
-// dont have access to dom events like click etc..coz we dont have dom access...
 self.addEventListener("install", function(event) {
-  //console.log(" [Service Worker ] Installing SW ....", event);
+
+  event.waitUntil(caches.open('static')//caches..referes to cache api...cache storage is one for a given domain...we can also open subcaches there
+                    .then(function(cache) { //it return a promose and pass a refernce to the cache
+                      console.log("[Service Workier] : Precaching App Shell")
+                      cache.addAll([
+                        "/",
+                        "/index.html",
+                        "/src/js/app.js",
+                        "/src/js/promise.js",
+                        "/src/js/fetch.js",
+                        "/src/js/material.min.js",
+                        "src/css/app.css",
+                        "src/css/feed.css",
+                        "src/images/main-image.jpg",
+                        "https://fonts.googleapis.com/css?family=Roboto:400,700",//we can cache this from our server(app) too
+                        "https://fonts.googleapis.com/icon?family=Material+Icons", // server shoul set cors header to allow cors else we will get error
+                        "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css"
+                      ])
+                      
+                      //after adding the icons into cache...its not coming while offlie....go to network tab and that url...go to preview... we see that url is again calling some other url for the icon...thats why icons are not showing in the app...
+                      //cache.add("/");// we have to load this else wunt access localhost:3030 ..ie: root url...we have individually go to the url...like 3030/index.html
+                      //cache.add('/index.html');
+                      //cache.add('/src/js/app.js') // add allows to add new resouse....we have to pass the url we have to send req send...if that resouce in our app...then pass relative path
+                      // all  inside add..are request not path or some string
+                   //storing polyfills like promose.js, fetch.js...has no value becoz the older browerse dont support sw
+                   //here we are adding these for performance reasons.... add those only when the mordern broswers ha=ve to add them
+                    }));         
+  
+  
+  //caches.open is aync method ...it will not wait for the event to finish...other listener get called....it can cause problems.....like we havent incatlled the cache...but the fetch try to access the cache
+  // so we will make it wait till it finishes
+
+
 });
+
+
+
 //install, active etc are lifecycle of sw
 self.addEventListener("activate", function(event) {
  //console.log(" [Service Worker ] Activating SW ....", event);
@@ -19,11 +49,20 @@ self.addEventListener("activate", function(event) {
 //fetch will get triggered whevenr our app fetch's smth..like load scripts, or load css,image...or...we manually do fetch in js file
 self.addEventListener("fetch", function(event) {
  // console.log("[Service Worker ] fetching smth ....", event);
-   // event.respondWith(null); // can override what we want to respond...if we dont use it...simple response the default
-    // with null...check the o/p...it will show site cannot reach
 
-    event.respondWith(fetch(event.request)); //This line does simply return the response of the request. This will become more useful once we start caching the response as well 
-});//responedWith expects a promise(asyn code which is handled by promise)
+   // event.respondWith(fetch(event.request)); //This line does simply return the response of the request. This will become more useful once we start caching the response as well 
+    event.respondWith(
+      caches.match(event.request)
+        .then(function (response){
+              if(response){
+                return response;
+              } else {
+                return fetch(event.request);//// all  inside add..are request not path or some string
+              }
+        })
+    );
+
+  });//responedWith expects a promise(asyn code which is handled by promise)
 
 /// we cam think sw as netwrok proxy....every ougoing fetch req goes through the sw
 //so does the resp
@@ -31,5 +70,10 @@ self.addEventListener("fetch", function(event) {
 
 
 
-
+//Imp Note : in sw we work with asyn code becoz it is running in background
 // note: fetch is triggered by the page...while install and activate is triggered by the browser..based on sw lifecycle
+
+// Note : is network tab..after adding app.js to cache we will se that app.js is coming from sw(only one app.js we will see)...but for other two time its coming... 1st mangened by sw..then going to server.....we have added all the req is going through sw
+// the gear icon in network tab : The gear icon can be misleading - it always shows up when the request was handled by the SW. And all requests are handled by it (as per our SW code). But not for all of them fitting items are found. The gear icon just indicates that the SW did something, not necessarily that it loaded the items.
+
+
