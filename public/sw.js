@@ -1,7 +1,12 @@
 
+var CACHE_STATIC_NAME = "static-10";
+
+var CACHE_DYNAMIC_NAME = "dynamic-v2";
+
+
 self.addEventListener("install", function(event) {
 
-  event.waitUntil(caches.open('static')//caches..referes to cache api...cache storage is one for a given domain...we can also open subcaches there
+  event.waitUntil(caches.open(CACHE_STATIC_NAME)//caches..referes to cache api...cache storage is one for a given domain...we can also open subcaches there
                     .then(function(cache) { //it return a promose and pass a refernce to the cache
                       console.log("[Service Workier] : Precaching App Shell")
                       cache.addAll([
@@ -36,16 +41,33 @@ self.addEventListener("install", function(event) {
 });
 
 
-
 //install, active etc are lifecycle of sw
 self.addEventListener("activate", function(event) {
  //console.log(" [Service Worker ] Activating SW ....", event);
+
+ //wait tii done with clean up...else we might react to fetch event...that will come from old cache
+ event.waitUntil(
+   caches.keys()
+      .then(function (keyList){
+
+        return Promise.all(keyList.map(function (key){
+          if(key !==CACHE_STATIC_NAME && key != CACHE_DYNAMIC_NAME){
+            console.log('[Service Worker] Removing Old Cache.. ', key);
+            return caches.delete(key);
+          }
+        }));// promise all : to ensure we return till all the clean up or update is done,,,read about prmise.all
+      })
+ )
+
+
+
   return self.clients.claim(); // it work without this like also ....but sometime activing may fails..so returning arespose
  // This command allows the SW to immediately start controlling the pages its registered for.
   //See this thread for a detailed discussion: https://stackoverflow.com/questions/41009167/what-is-the-use-of-self-clients-claim
   //to insure sw activated correctly..might not need in future
 });
 
+//Note : we delete the old cache in activate not in install...beacuause at the time of install some part of our app might be using it..it can break our app...wait for to comlate the install and do the deletion in activate..
 // non lifecyle events....
 
 //fetch will get triggered whevenr our app fetch's smth..like load scripts, or load css,image...or...we manually do fetch in js file
@@ -61,7 +83,7 @@ self.addEventListener("fetch", function(event) {
               } else {
                 return fetch(event.request)      //// all  inside add..are request not path or some string
                           .then(function(res) {
-                            caches.open("dynamic") ///for dynamic caching
+                            caches.open(CACHE_DYNAMIC_NAME) ///for dynamic caching
                               .then(function(cache) {
                                 cache.put(event.request.url, res.clone()) // we are cloning here....not just using res..why?
                                 return res;  /// if we res directly it get consumed and will be empty thereafter..thats why clone..thats how response work...we can only consume once
@@ -75,6 +97,11 @@ self.addEventListener("fetch", function(event) {
     );
 
   });//responedWith expects a promise(asyn code which is handled by promise)
+
+
+
+
+
 
 /// we cam think sw as netwrok proxy....every ougoing fetch req goes through the sw
 //so does the resp
@@ -92,3 +119,5 @@ self.addEventListener("fetch", function(event) {
 
 // Note: we get a chrome extension error in the console......
     //The SW generally catches all requests that are sent from your page. And if you have a Chrome extension that somehow sends Http requests on behalf of your app, those requests will be caught, too. Of course - with proper filtering set up (as we do it in the course) - this shouldn't cause a problem.
+
+
