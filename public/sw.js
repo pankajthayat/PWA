@@ -41,6 +41,8 @@ self.addEventListener("install", function(event) {
 self.addEventListener("activate", function(event) {
  //console.log(" [Service Worker ] Activating SW ....", event);
   return self.clients.claim(); // it work without this like also ....but sometime activing may fails..so returning arespose
+ // This command allows the SW to immediately start controlling the pages its registered for.
+  //See this thread for a detailed discussion: https://stackoverflow.com/questions/41009167/what-is-the-use-of-self-clients-claim
   //to insure sw activated correctly..might not need in future
 });
 
@@ -55,9 +57,19 @@ self.addEventListener("fetch", function(event) {
       caches.match(event.request)
         .then(function (response){
               if(response){
-                return response;
+                return response; // if not in the cache make network request
               } else {
-                return fetch(event.request);//// all  inside add..are request not path or some string
+                return fetch(event.request)      //// all  inside add..are request not path or some string
+                          .then(function(res) {
+                            caches.open("dynamic") ///for dynamic caching
+                              .then(function(cache) {
+                                cache.put(event.request.url, res.clone()) // we are cloning here....not just using res..why?
+                                return res;  /// if we res directly it get consumed and will be empty thereafter..thats why clone..thats how response work...we can only consume once
+                              
+                              })
+                          }).catch((error)=>{
+
+                          })
               }
         })
     );
@@ -68,6 +80,7 @@ self.addEventListener("fetch", function(event) {
 //so does the resp
 
 
+//note : add and put...difference?? add send req..and automatically store key value pair...but in put we have to do manunally
 
 
 //Imp Note : in sw we work with asyn code becoz it is running in background
@@ -77,3 +90,5 @@ self.addEventListener("fetch", function(event) {
 // the gear icon in network tab : The gear icon can be misleading - it always shows up when the request was handled by the SW. And all requests are handled by it (as per our SW code). But not for all of them fitting items are found. The gear icon just indicates that the SW did something, not necessarily that it loaded the items.
 
 
+// Note: we get a chrome extension error in the console......
+    //The SW generally catches all requests that are sent from your page. And if you have a Chrome extension that somehow sends Http requests on behalf of your app, those requests will be caught, too. Of course - with proper filtering set up (as we do it in the course) - this shouldn't cause a problem.
